@@ -2,13 +2,7 @@ name: BIS V2 commercial site deployment
 on:
   workflow_dispatch:
   push:
-    branches: [bis-v2-development]
-    paths:
-      - '*.html'
-      - 'assets/**'
-      - 'scripts/build_release.py'
-      - 'scripts/check_release.py'
-      - '.github/workflows/bis-v2-deploy-separate.yml'
+    branches: [main]
 permissions:
   contents: read
   pages: write
