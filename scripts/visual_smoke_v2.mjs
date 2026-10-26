@@ -32,6 +32,26 @@ for(const v of views){
     const oversized=[...document.querySelectorAll('*')].filter(x=>{const r=x.getBoundingClientRect();return r.width>10&&r.right>window.innerWidth+4&&getComputedStyle(x).position!=='fixed'}).slice(0,18).map(x=>{const r=x.getBoundingClientRect();return x.tagName.toLowerCase()+'.'+String(x.className?.baseVal||x.className||'').slice(0,45)+' ['+Math.round(r.left)+'..'+Math.round(r.right)+'] section='+String(x.closest('section')?.className||'')+' text='+x.textContent.trim().slice(0,55).replaceAll('\n',' ')});
     return {overflow,broken,h1,main:!!document.querySelector('main'),missingLabels,oversized};
   });
+  if(pageFile==='index.html'&&v.name==='mobile'){
+    const before=await page.locator('#heroSlideImage').getAttribute('src');
+    if(await page.locator('.carousel-dot').count()>1){
+      await page.locator('.carousel-dot').nth(1).click();
+      await page.waitForTimeout(900);
+      const after=await page.locator('#heroSlideImage').getAttribute('src');
+      if(before===after)errors.push('Hero carousel image did not change on tap');
+      const current=await page.locator('#heroSlideImage').evaluate(img=>img.currentSrc);
+      if(current&&after&&!current.includes(after.split('/').pop()))errors.push('Hero responsive source is stale after slide change');
+    }else errors.push('Carousel dots missing');
+  }
+  if(v.width<=390){
+    const contact=page.locator('.bis-mobile-contact');
+    if(await contact.count()!==1)errors.push('Missing mobile contact bar');
+    else {
+      const visible=await contact.isVisible();
+      if(!visible)errors.push('Contact options hidden on mobile');
+      if(await contact.locator('a[href^="tel:"]').count()!==1)errors.push('Missing phone contact action');
+    }
+  }
   if(shots.has(pageFile)&&v.name!=='small-mobile')await page.screenshot({path:'artifacts/bis-v2-review/'+pageFile.replace('.html','')+'-'+v.name+'.jpg',type:'jpeg',quality:77,fullPage:true,animations:'disabled'});
   result.push({page:pageFile,viewport:v.name,...audit,errors,failed});
   await page.close();
