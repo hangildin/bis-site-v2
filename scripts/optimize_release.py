@@ -23,6 +23,7 @@ def main():
     replacements={}
     dims={}
     variants={}
+    medium={}
     converted=skipped=0
     for path in all_images:
         rel=path.relative_to(root).as_posix()
@@ -49,6 +50,13 @@ def main():
                     smallpath=path.with_name(path.stem+"-mobile.webp")
                     small.save(smallpath,format="WEBP",quality=73,method=5)
                     variants[newrel]=smallpath.relative_to(root).as_posix()
+                    # Extra source for the hero LCP: high-DPR mobile otherwise downloads 1800px.
+                    if rel=='assets/zelenodolsk/photo_4_2026-10-19_15-18-08.jpg':
+                        mid=im.copy()
+                        mid.thumbnail((1200,1200),Image.Resampling.LANCZOS)
+                        midpath=path.with_name(path.stem+'-medium.webp')
+                        mid.save(midpath,format='WEBP',quality=74,method=5)
+                        medium[newrel]=midpath.relative_to(root).as_posix()
                 converted+=1
         except (UnidentifiedImageError,OSError) as e:
             raise SystemExit(f"Cannot optimize source {rel}: {e}")
@@ -69,7 +77,9 @@ def main():
                     tag=tag[:-1]+f' width="{w}" height="{h}">'
                 if src in variants and "srcset=" not in tag:
                     sm=variants[src]
-                    tag=tag[:-1]+f' srcset="{sm} 800w, {src} {w}w" sizes="(max-width: 800px) 100vw, (max-width: 1250px) 65vw, 1200px">'
+                    responsive=f'{sm} 800w, {src} {w}w'
+                    if src in medium:responsive=f'{sm} 800w, {medium[src]} 1200w, {src} {w}w'
+                    tag=tag[:-1]+f' srcset="{responsive}" sizes="(max-width: 800px) 100vw, (max-width: 1250px) 65vw, 1200px">'
                 return tag
             html=re.sub(r'<img\b[^>]*>',add_attrs,html,flags=re.I)
             # Responsive preload must match srcset; otherwise small phones download the full hero unnecessarily.
@@ -82,7 +92,9 @@ def main():
                 if src not in variants:return tag
                 small=variants[src]
                 w=dims[src][0]
-                return tag[:-1]+f' imagesrcset="{small} 800w, {src} {w}w" imagesizes="(max-width: 800px) 100vw, 65vw">'
+                responsive=f'{small} 800w, {src} {w}w'
+                if src in medium:responsive=f'{small} 800w, {medium[src]} 1200w, {src} {w}w'
+                return tag[:-1]+f' imagesrcset="{responsive}" imagesizes="(max-width: 800px) 100vw, 65vw">'
             html=re.sub(r'<link\b[^>]*>',preload,html,flags=re.I)
             # The carousel changes img.src in JS. Keeping a previous srcset would lock it to slide one.
             if 'id="heroSlideImage"' in html:
