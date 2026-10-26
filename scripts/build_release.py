@@ -6,6 +6,7 @@ Production URLs and canonical tags are set from --base-url at build time.
 Use only after choosing a separate GitHub Pages repository/domain.
 """
 import argparse
+import json
 import re
 import shutil
 import sys
@@ -52,6 +53,42 @@ def main():
         if a.publish:
             content=re.sub(r'<meta\s+name="robots"\s+content="noindex,\s*nofollow"\s*/?>',"",content,flags=re.I)
             content=content.replace("<!-- BIS v2 preview only: REMOVE noindex before any future release -->","")
+        # Adds conversion routes without forms or external tracking; original HTML is unchanged.
+        main_tag=re.search(r'<main\b[^>]*>',content,re.I)
+        if not main_tag:
+            raise ValueError("Page missing a main landmark: "+name)
+        existing_id=re.search(r'\bid="([^"]+)"',main_tag.group())
+        main_id=existing_id.group(1) if existing_id else "main-content"
+        if not existing_id:
+            content=content[:main_tag.start()]+main_tag.group()[:-1]+' id="main-content">'+content[main_tag.end():]
+        skip='<a class="skip-to-content" href="#'+main_id+'">К основному содержимому</a>'
+        mobile=(
+            '<nav class="bis-mobile-contact" aria-label="Быстрая связь с агентством">'
+            '<a href="tel:+79631223399" data-bis-goal="phone_click" aria-label="Позвонить в Бис*">Позвонить</a>'
+            '<a href="https://t.me/+7z9ehE-JLUs0ZjNi" target="_blank" rel="noopener noreferrer" '
+            'data-bis-goal="telegram_click" aria-label="Написать агентству Бис* в Telegram">Telegram ↗</a>'
+            '</nav>'
+        )
+        if '<body>' in content and '</body>' in content:
+            content=content.replace('<body>', '<body>'+skip,1)
+            content=content.replace('</body>',mobile+'</body>',1)
+        if '</head>' in content:
+            content=content.replace('</head>',
+                '<link rel="stylesheet" href="assets/bis-enhance.css"></head>',1)
+            # Don't duplicate Article JSON-LD. Search-facing organization claims use verified contacts only.
+            if not name.startswith('journal-'):
+                entity={
+                    "@context":"https://schema.org",
+                    "@type":"Organization",
+                    "name":"Бис* — Большие интересные события",
+                    "url":url,
+                    "telephone":"+79631223399",
+                    "email":"bis.manager@vk.com",
+                    "description":"Агентство корпоративных, городских, брендовых, спортивных и детских мероприятий",
+                }
+                markup='<script type="application/ld+json">'+json.dumps(
+                    entity,ensure_ascii=False).replace('<','\\u003c')+'</script>'
+                content=content.replace('</head>',markup+'</head>',1)
         (target/name).write_text(content,encoding="utf-8")
     # self-contained paths needed by deployed html; do not expose repo internals.
     (target/"sitemap.xml").write_text(

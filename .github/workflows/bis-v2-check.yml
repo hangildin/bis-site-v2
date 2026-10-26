@@ -12,6 +12,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      - name: Install image optimizer
+        run: python3 -m pip install --user Pillow==11.3.0
       - name: Validate staging homepage
         run: |
           python3 .github/scripts/check_bis_v2.py
@@ -25,3 +27,6 @@ jobs:
           python3 .github/scripts/check_content_v2.py
           python3 .github/scripts/check_journal_v2.py
           python3 scripts/check_release.py
+          python3 scripts/build_release.py --base-url https://hangildin.github.io/bis-site-v2/ --publish --out dist
+          python3 scripts/optimize_release.py --dist dist
+          python3 scripts/check_dist.py dist
