@@ -54,9 +54,14 @@ def main():
             content=re.sub(r'<meta\s+name="robots"\s+content="noindex,\s*nofollow"\s*/?>',"",content,flags=re.I)
             content=content.replace("<!-- BIS v2 preview only: REMOVE noindex before any future release -->","")
         # Adds conversion routes without forms or external tracking; original HTML is unchanged.
-        if 'id="main-content"' not in content:
-            content=re.sub(r'<main\b', '<main id="main-content"', content, count=1)
-        skip='<a class="skip-to-content" href="#main-content">К основному содержимому</a>'
+        main_tag=re.search(r'<main\b[^>]*>',content,re.I)
+        if not main_tag:
+            raise ValueError("Page missing a main landmark: "+name)
+        existing_id=re.search(r'\bid="([^"]+)"',main_tag.group())
+        main_id=existing_id.group(1) if existing_id else "main-content"
+        if not existing_id:
+            content=content[:main_tag.start()]+main_tag.group()[:-1]+' id="main-content">'+content[main_tag.end():]
+        skip='<a class="skip-to-content" href="#'+main_id+'">К основному содержимому</a>'
         mobile=(
             '<nav class="bis-mobile-contact" aria-label="Быстрая связь с агентством">'
             '<a href="tel:+79631223399" data-bis-goal="phone_click" aria-label="Позвонить в Бис*">Позвонить</a>'
