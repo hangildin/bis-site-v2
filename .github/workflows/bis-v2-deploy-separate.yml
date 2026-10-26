@@ -20,10 +20,13 @@ jobs:
       url: ${{ steps.deployment.outputs.page_url }}
     steps:
       - uses: actions/checkout@v4
-      - name: Build isolated public release and check all 25 pages
+      - name: Build, optimize and test all 25 published pages
         run: |
+          python3 -m pip install --user Pillow==11.3.0
           python3 scripts/check_release.py
           python3 scripts/build_release.py --base-url https://hangildin.github.io/bis-site-v2/ --publish --out dist
+          python3 scripts/optimize_release.py --dist dist
+          python3 scripts/check_dist.py dist
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v4
         with:
