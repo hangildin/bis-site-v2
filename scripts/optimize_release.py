@@ -71,7 +71,7 @@ def main():
                     sm=variants[src]
                     tag=tag[:-1]+f' srcset="{sm} 800w, {src} {w}w" sizes="(max-width: 800px) 100vw, (max-width: 1250px) 65vw, 1200px">'
                 return tag
-            html=re.sub(r'<img\\b[^>]*>',add_attrs,html,flags=re.I)
+            html=re.sub(r'<img\b[^>]*>',add_attrs,html,flags=re.I)
             # Responsive preload must match srcset; otherwise small phones download the full hero unnecessarily.
             def preload(match):
                 tag=match.group(0)
@@ -83,7 +83,7 @@ def main():
                 small=variants[src]
                 w=dims[src][0]
                 return tag[:-1]+f' imagesrcset="{small} 800w, {src} {w}w" imagesizes="(max-width: 800px) 100vw, 65vw">'
-            html=re.sub(r'<link\\b[^>]*>',preload,html,flags=re.I)
+            html=re.sub(r'<link\b[^>]*>',preload,html,flags=re.I)
             # The carousel changes img.src in JS. Keeping a previous srcset would lock it to slide one.
             if 'id="heroSlideImage"' in html:
                 html=html.replace('img.src=item.src;',
