@@ -55,7 +55,7 @@ def main():
             content=content.replace("<!-- BIS v2 preview only: REMOVE noindex before any future release -->","")
         # Adds conversion routes without forms or external tracking; original HTML is unchanged.
         if 'id="main-content"' not in content:
-            content=re.sub(r'<main\\b', '<main id="main-content"', content, count=1)
+            content=re.sub(r'<main\b', '<main id="main-content"', content, count=1)
         skip='<a class="skip-to-content" href="#main-content">К основному содержимому</a>'
         mobile=(
             '<nav class="bis-mobile-contact" aria-label="Быстрая связь с агентством">'
