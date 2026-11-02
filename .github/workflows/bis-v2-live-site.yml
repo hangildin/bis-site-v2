@@ -1,0 +1,19 @@
+name: BIS V2 live public verification
+on:
+  workflow_run:
+    workflows: ["BIS V2 commercial site deployment"]
+    types: [completed]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  verify-public-site:
+    if: github.event_name != 'workflow_run' || github.event.workflow_run.conclusion == 'success'
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+      - name: Verify public BIS V2 URLs, indexability, assets, phone and Telegram
+        run: python3 scripts/check_live_site.py
