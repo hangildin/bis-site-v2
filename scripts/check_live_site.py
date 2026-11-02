@@ -58,6 +58,7 @@ def main():
    assert '"@type": "Article"' in s or '"@type":"Article"' in s,("article schema",url)
   for href in p.links:
    linked=urljoin(url,href).split("#")[0].split("?")[0]
+   if linked==BASE+"index.html":linked=BASE
    if linked.startswith(BASE) and linked.endswith(".html"):
     assert linked in urls,("internal link not in sitemap",url,linked)
   for src in p.assets[:2]:
