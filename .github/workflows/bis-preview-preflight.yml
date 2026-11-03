@@ -1,0 +1,22 @@
+name: BIS duplicate-site prevention preflight
+on:
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - name: Verify full preview build and safe redirects
+        run: |
+          python3 -m pip install --user Pillow==11.3.0
+          python3 scripts/check_release.py
+          python3 scripts/build_release.py --base-url https://hangildin.github.io/bis-site-v2/ --publish --out dist
+          python3 scripts/optimize_release.py --dist dist
+          python3 scripts/check_dist.py dist
+          python3 scripts/make_preview_redirect.py --dist dist
+          python3 scripts/check_preview_redirect.py --dist dist
