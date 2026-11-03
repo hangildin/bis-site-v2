@@ -1,4 +1,4 @@
-name: BIS V2 live public verification
+name: BIS old V2 preview redirect verification
 on:
   workflow_run:
     workflows: ["BIS V2 commercial site deployment"]
@@ -15,5 +15,5 @@ jobs:
       - uses: actions/checkout@v4
         with:
           ref: main
-      - name: Verify public BIS V2 URLs, indexability, assets, phone and Telegram
-        run: python3 scripts/check_live_site.py
+      - name: Verify former V2 site redirects and is not indexed
+        run: python3 scripts/check_preview_redirect.py --live
